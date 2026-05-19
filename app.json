@@ -1,29 +1,59 @@
 {
   "expo": {
-    "name": "NotasApp",
-    "slug": "NotasApp",
+    "name": "Next Notes",
+    "slug": "nextnotes",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0A0A0F"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.nextnotes.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Next Notes necesita acceso a la cámara para tomar fotos de tus notas.",
+        "NSMicrophoneUsageDescription": "Next Notes necesita acceso al micrófono para grabar notas de voz.",
+        "NSPhotoLibraryUsageDescription": "Next Notes guarda tus fotos en el dispositivo.",
+        "NSPhotoLibraryAddUsageDescription": "Next Notes guarda tus fotos en el dispositivo."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0A0A0F"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.nextnotes.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Next Notes necesita acceso a la cámara para tomar fotos."
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Next Notes necesita acceso al micrófono para grabar notas de voz."
+        }
+      ],
+      "expo-file-system"
+    ]
   }
 }
