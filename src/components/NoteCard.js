@@ -6,36 +6,35 @@ import {
   StyleSheet,
   Image,
   Dimensions,
+  Animated,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withDelay,
-  withSpring,
-  interpolate,
-} from 'react-native-reanimated';
 import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 const NoteCard = ({ note, onPress, onDelete, index = 0 }) => {
   const { theme } = useTheme();
-  const translateX = useSharedValue(-width);
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.9);
+  const translateX = useRef(new Animated.Value(-width)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
 
   useEffect(() => {
     const delay = index * 80;
-    translateX.value = withDelay(delay, withSpring(0, { damping: 18, stiffness: 120 }));
-    opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
-    scale.value = withDelay(delay, withSpring(1, { damping: 15 }));
+    
+    Animated.sequence([
+      Animated.delay(delay),
+      Animated.parallel([
+        Animated.spring(translateX, { toValue: 0, friction: 6, tension: 120, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.spring(scale, { toValue: 1, friction: 6, useNativeDriver: true })
+      ])
+    ]).start();
   }, []);
 
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }, { scale: scale.value }],
-    opacity: opacity.value,
-  }));
+  const animStyle = {
+    transform: [{ translateX }, { scale }],
+    opacity,
+  };
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr);

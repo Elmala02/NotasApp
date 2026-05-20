@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,16 +11,8 @@ import {
   Alert,
   Dimensions,
   Platform,
+  Animated,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  FadeIn,
-  FadeInDown,
-  FadeInUp,
-} from 'react-native-reanimated';
 import { Audio } from 'expo-av';
 import { useTheme } from '../context/ThemeContext';
 import { deleteNote } from '../services/storage';
@@ -35,21 +27,34 @@ const DetailScreen = ({ route, navigation }) => {
   const [playbackPos, setPlaybackPos] = useState(0);
   const [playbackDuration, setPlaybackDuration] = useState(0);
 
-  const headerScale = useSharedValue(0.92);
-  const headerOpacity = useSharedValue(0);
+  const headerScale = useRef(new Animated.Value(0.92)).current;
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const fadeAnim1 = useRef(new Animated.Value(0)).current;
+  const fadeAnim2 = useRef(new Animated.Value(0)).current;
+  const fadeAnim3 = useRef(new Animated.Value(0)).current;
+  const fadeAnim4 = useRef(new Animated.Value(0)).current;
+  const fadeAnim5 = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    headerScale.value = withSpring(1, { damping: 14 });
-    headerOpacity.value = withTiming(1, { duration: 500 });
+    Animated.parallel([
+      Animated.spring(headerScale, { toValue: 1, friction: 6, tension: 80, useNativeDriver: true }),
+      Animated.timing(headerOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(fadeAnim1, { toValue: 1, duration: 400, delay: 100, useNativeDriver: true }),
+      Animated.timing(fadeAnim2, { toValue: 1, duration: 400, delay: 200, useNativeDriver: true }),
+      Animated.timing(fadeAnim3, { toValue: 1, duration: 400, delay: 300, useNativeDriver: true }),
+      Animated.timing(fadeAnim4, { toValue: 1, duration: 400, delay: 400, useNativeDriver: true }),
+      Animated.timing(fadeAnim5, { toValue: 1, duration: 400, delay: 500, useNativeDriver: true })
+    ]).start();
+    
     return () => {
       if (sound) sound.unloadAsync();
     };
   }, []);
 
-  const headerAnim = useAnimatedStyle(() => ({
-    transform: [{ scale: headerScale.value }],
-    opacity: headerOpacity.value,
-  }));
+  const headerAnim = {
+    transform: [{ scale: headerScale }],
+    opacity: headerOpacity,
+  };
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr);
@@ -83,6 +88,13 @@ const DetailScreen = ({ route, navigation }) => {
         setIsPlaying(false);
         return;
       }
+      
+      // Asegurar que el modo de audio permita reproducción
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
+
       if (sound) {
         await sound.playAsync();
         setIsPlaying(true);
@@ -105,7 +117,8 @@ const DetailScreen = ({ route, navigation }) => {
       setSound(s);
       setIsPlaying(true);
     } catch (e) {
-      Alert.alert('Error', 'No se pudo reproducir el audio.');
+      console.error("Error al reproducir audio:", e);
+      Alert.alert('Error', 'No se pudo reproducir el audio: ' + (e.message || e.toString()));
     }
   };
 
@@ -141,7 +154,7 @@ const DetailScreen = ({ route, navigation }) => {
       <StatusBar barStyle="light-content" backgroundColor={theme.background} />
 
       {/* HEADER */}
-      <Animated.View entering={FadeIn.duration(400)} style={styles.header}>
+      <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
@@ -156,7 +169,7 @@ const DetailScreen = ({ route, navigation }) => {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
         {/* TITLE CARD */}
-        <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.titleCard}>
+        <Animated.View style={[styles.titleCard, { opacity: fadeAnim1 }]}>
           <View style={styles.titleAccentBar} />
           <Text style={styles.noteTitle}>{note.title || 'Sin título'}</Text>
           <Text style={styles.noteDate}>{formatDate(note.createdAt || note.updatedAt)}</Text>
@@ -178,7 +191,7 @@ const DetailScreen = ({ route, navigation }) => {
 
         {/* IMAGE */}
         {note.imageUri && (
-          <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.section}>
+          <Animated.View style={[styles.section, { opacity: fadeAnim2 }]}>
             <Text style={styles.sectionLabel}>◈ FOTOGRAFÍA</Text>
             <View style={styles.imageWrapper}>
               <Image source={{ uri: note.imageUri }} style={styles.fullImage} resizeMode="cover" />
@@ -191,7 +204,7 @@ const DetailScreen = ({ route, navigation }) => {
 
         {/* DESCRIPTION */}
         {note.description ? (
-          <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.section}>
+          <Animated.View style={[styles.section, { opacity: fadeAnim3 }]}>
             <Text style={styles.sectionLabel}>◈ DESCRIPCIÓN</Text>
             <View style={styles.descCard}>
               <Text style={styles.descText}>{note.description}</Text>
@@ -201,7 +214,7 @@ const DetailScreen = ({ route, navigation }) => {
 
         {/* AUDIO PLAYER */}
         {note.audioUri && (
-          <Animated.View entering={FadeInDown.delay(400).duration(400)} style={styles.section}>
+          <Animated.View style={[styles.section, { opacity: fadeAnim4 }]}>
             <Text style={styles.sectionLabel}>◈ NOTA DE VOZ</Text>
             <View style={styles.playerCard}>
               {/* Waveform visual */}
@@ -241,7 +254,7 @@ const DetailScreen = ({ route, navigation }) => {
         )}
 
         {/* META INFO */}
-        <Animated.View entering={FadeInUp.delay(500).duration(400)} style={styles.metaCard}>
+        <Animated.View style={[styles.metaCard, { opacity: fadeAnim5 }]}>
           <Text style={styles.metaLabel}>ID DE NOTA</Text>
           <Text style={styles.metaValue} numberOfLines={1}>{note.id}</Text>
         </Animated.View>

@@ -1,68 +1,55 @@
-import React, { useEffect } from 'react';
-import { TouchableOpacity, StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
-  withSpring,
-  Easing,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { TouchableOpacity, StyleSheet, Text, View, Animated, Easing } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 
 const FloatingButton = ({ onPress }) => {
   const { theme } = useTheme();
-  const scale = useSharedValue(1);
-  const pulseScale = useSharedValue(1);
-  const pulseOpacity = useSharedValue(0.6);
-  const translateY = useSharedValue(100);
-  const opacity = useSharedValue(0);
+  const scale = useRef(new Animated.Value(1)).current;
+  const pulseScale = useRef(new Animated.Value(1)).current;
+  const pulseOpacity = useRef(new Animated.Value(0.6)).current;
+  const translateY = useRef(new Animated.Value(100)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Entry animation
-    translateY.value = withSpring(0, { damping: 12, stiffness: 90 });
-    opacity.value = withTiming(1, { duration: 500 });
+    Animated.parallel([
+      Animated.spring(translateY, { toValue: 0, friction: 6, tension: 90, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: true })
+    ]).start();
 
     // Continuous pulse ring
-    pulseScale.value = withRepeat(
-      withSequence(
-        withTiming(1.6, { duration: 1200, easing: Easing.out(Easing.quad) }),
-        withTiming(1, { duration: 0 })
-      ),
-      -1,
-      false
-    );
-    pulseOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0, { duration: 1200 }),
-        withTiming(0.5, { duration: 0 })
-      ),
-      -1,
-      false
-    );
+    Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(pulseScale, { toValue: 1.6, duration: 1200, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0, duration: 1200, useNativeDriver: true })
+        ]),
+        Animated.parallel([
+          Animated.timing(pulseScale, { toValue: 1, duration: 0, useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0.6, duration: 0, useNativeDriver: true })
+        ])
+      ])
+    ).start();
 
     // Subtle bounce
-    scale.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 2000 }),
-        withSpring(1.08, { damping: 4 }),
-        withSpring(1, { damping: 8 })
-      ),
-      -1,
-      false
-    );
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1, duration: 2000, useNativeDriver: true }),
+        Animated.spring(scale, { toValue: 1.08, friction: 4, useNativeDriver: true }),
+        Animated.spring(scale, { toValue: 1, friction: 8, useNativeDriver: true })
+      ])
+    ).start();
   }, []);
 
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }, { translateY: translateY.value }],
-    opacity: opacity.value,
-  }));
+  const animStyle = {
+    transform: [{ scale }, { translateY }],
+    opacity,
+  };
 
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-    opacity: pulseOpacity.value,
-  }));
+  const pulseStyle = {
+    transform: [{ scale: pulseScale }],
+    opacity: pulseOpacity,
+  };
 
   const styles = makeStyles(theme);
 

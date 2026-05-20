@@ -10,14 +10,8 @@ import {
   TouchableOpacity,
   Alert,
   Dimensions,
+  Animated,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  FadeIn,
-} from 'react-native-reanimated';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
 import { getNotes, deleteNote } from '../services/storage';
@@ -31,12 +25,18 @@ const HomeScreen = ({ navigation }) => {
   const [notes, setNotes] = useState([]);
   const [search, setSearch] = useState('');
   const [filtered, setFiltered] = useState([]);
-  const headerY = useSharedValue(-60);
-  const headerOpacity = useSharedValue(0);
+  const headerY = useRef(new Animated.Value(-60)).current;
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const fadeAnim1 = useRef(new Animated.Value(0)).current;
+  const fadeAnim2 = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    headerY.value = withSpring(0, { damping: 14, stiffness: 100 });
-    headerOpacity.value = withTiming(1, { duration: 600 });
+    Animated.parallel([
+      Animated.spring(headerY, { toValue: 0, friction: 6, tension: 100, useNativeDriver: true }),
+      Animated.timing(headerOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.timing(fadeAnim1, { toValue: 1, duration: 500, delay: 200, useNativeDriver: true }),
+      Animated.timing(fadeAnim2, { toValue: 1, duration: 500, delay: 300, useNativeDriver: true })
+    ]).start();
   }, []);
 
   useFocusEffect(
@@ -85,10 +85,10 @@ const HomeScreen = ({ navigation }) => {
     );
   };
 
-  const headerAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: headerY.value }],
-    opacity: headerOpacity.value,
-  }));
+  const headerAnimStyle = {
+    transform: [{ translateY: headerY }],
+    opacity: headerOpacity,
+  };
 
   const styles = makeStyles(theme);
 
@@ -122,7 +122,7 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.glowDivider} />
 
       {/* SEARCH BAR */}
-      <Animated.View entering={FadeIn.delay(200).duration(500)} style={styles.searchWrapper}>
+      <Animated.View style={[styles.searchWrapper, { opacity: fadeAnim1 }]} >
         <View style={styles.searchContainer}>
           <Text style={styles.searchIcon}>⌕</Text>
           <TextInput
@@ -141,7 +141,7 @@ const HomeScreen = ({ navigation }) => {
       </Animated.View>
 
       {/* STATS BAR */}
-      <Animated.View entering={FadeIn.delay(300).duration(500)} style={styles.statsBar}>
+      <Animated.View style={[styles.statsBar, { opacity: fadeAnim2 }]}>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>{notes.filter(n => n.imageUri).length}</Text>
           <Text style={styles.statLabel}>📷 FOTOS</Text>

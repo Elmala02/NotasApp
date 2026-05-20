@@ -1,17 +1,5 @@
-import 'react-native-gesture-handler';
-
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, StatusBar } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  withSequence,
-  withDelay,
-  runOnJS,
-  Easing,
-} from 'react-native-reanimated';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, Dimensions, StatusBar, Animated, Easing } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -25,65 +13,78 @@ const Stack = createNativeStackNavigator();
 
 // ─── SPLASH SCREEN ────────────────────────────────────────────────────────────
 const SplashScreen = ({ onFinish }) => {
-  const logoScale = useSharedValue(0.3);
-  const logoOpacity = useSharedValue(0);
-  const glowOpacity = useSharedValue(0);
-  const taglineOpacity = useSharedValue(0);
-  const taglineY = useSharedValue(20);
-  const screenOpacity = useSharedValue(1);
-  const ringScale = useSharedValue(0.5);
-  const ringOpacity = useSharedValue(0.8);
+  const logoScale = useRef(new Animated.Value(0.3)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+  const glowOpacity = useRef(new Animated.Value(0)).current;
+  const taglineOpacity = useRef(new Animated.Value(0)).current;
+  const taglineY = useRef(new Animated.Value(20)).current;
+  const screenOpacity = useRef(new Animated.Value(1)).current;
+  const ringScale = useRef(new Animated.Value(0.5)).current;
+  const ringOpacity = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
     // Ring expand
-    ringScale.value = withTiming(2.5, { duration: 1200, easing: Easing.out(Easing.quad) });
-    ringOpacity.value = withTiming(0, { duration: 1200 });
+    Animated.parallel([
+      Animated.timing(ringScale, { toValue: 2.5, duration: 1200, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(ringOpacity, { toValue: 0, duration: 1200, useNativeDriver: true })
+    ]).start();
 
     // Logo entrance
-    logoOpacity.value = withDelay(300, withTiming(1, { duration: 500 }));
-    logoScale.value = withDelay(300, withSpring(1, { damping: 12, stiffness: 80 }));
+    Animated.sequence([
+      Animated.delay(300),
+      Animated.parallel([
+        Animated.timing(logoOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.spring(logoScale, { toValue: 1, friction: 5, tension: 80, useNativeDriver: true })
+      ])
+    ]).start();
 
     // Glow pulse
-    glowOpacity.value = withDelay(600, withSequence(
-      withTiming(1, { duration: 400 }),
-      withTiming(0.4, { duration: 400 }),
-      withTiming(0.8, { duration: 400 }),
-    ));
+    Animated.sequence([
+      Animated.delay(600),
+      Animated.timing(glowOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.timing(glowOpacity, { toValue: 0.4, duration: 400, useNativeDriver: true }),
+      Animated.timing(glowOpacity, { toValue: 0.8, duration: 400, useNativeDriver: true })
+    ]).start();
 
     // Tagline
-    taglineOpacity.value = withDelay(900, withTiming(1, { duration: 500 }));
-    taglineY.value = withDelay(900, withSpring(0, { damping: 14 }));
+    Animated.sequence([
+      Animated.delay(900),
+      Animated.parallel([
+        Animated.timing(taglineOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.spring(taglineY, { toValue: 0, friction: 6, useNativeDriver: true })
+      ])
+    ]).start();
 
     // Exit
     setTimeout(() => {
-      screenOpacity.value = withTiming(0, { duration: 600 }, (finished) => {
-        if (finished) runOnJS(onFinish)();
+      Animated.timing(screenOpacity, { toValue: 0, duration: 600, useNativeDriver: true }).start(() => {
+        onFinish();
       });
     }, 2600);
   }, []);
 
-  const logoStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: logoScale.value }],
-    opacity: logoOpacity.value,
-  }));
+  const logoStyle = {
+    transform: [{ scale: logoScale }],
+    opacity: logoOpacity,
+  };
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-  }));
+  const glowStyle = {
+    opacity: glowOpacity,
+  };
 
-  const taglineStyle = useAnimatedStyle(() => ({
-    opacity: taglineOpacity.value,
-    transform: [{ translateY: taglineY.value }],
-  }));
+  const taglineStyle = {
+    opacity: taglineOpacity,
+    transform: [{ translateY: taglineY }],
+  };
 
-  const screenStyle = useAnimatedStyle(() => ({
-    opacity: screenOpacity.value,
-  }));
+  const screenStyle = {
+    opacity: screenOpacity,
+  };
 
-  const ringStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: ringScale.value }],
-    opacity: ringOpacity.value,
-  }));
+  const ringStyle = {
+    transform: [{ scale: ringScale }],
+    opacity: ringOpacity,
+  };
 
   return (
     <Animated.View style={[styles.splash, screenStyle]}>

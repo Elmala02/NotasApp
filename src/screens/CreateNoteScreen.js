@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+
 import {
   View,
   Text,
@@ -13,18 +14,11 @@ import {
   Modal,
   Dimensions,
   Platform,
+  Animated,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  FadeIn,
-  FadeInDown,
-} from 'react-native-reanimated';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../context/ThemeContext';
 import { saveNote } from '../services/storage';
@@ -60,23 +54,34 @@ const CreateNoteScreen = ({ navigation }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const durationTimer = useRef(null);
 
-  const screenY = useSharedValue(50);
-  const screenOpacity = useSharedValue(0);
+  const screenY = useRef(new Animated.Value(50)).current;
+  const screenOpacity = useRef(new Animated.Value(0)).current;
+  const fadeAnim1 = useRef(new Animated.Value(0)).current;
+  const fadeAnim2 = useRef(new Animated.Value(0)).current;
+  const fadeAnim3 = useRef(new Animated.Value(0)).current;
+  const fadeAnim4 = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    screenY.value = withSpring(0, { damping: 16 });
-    screenOpacity.value = withTiming(1, { duration: 500 });
+    Animated.parallel([
+      Animated.spring(screenY, { toValue: 0, friction: 6, tension: 80, useNativeDriver: true }),
+      Animated.timing(screenOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(fadeAnim1, { toValue: 1, duration: 400, delay: 100, useNativeDriver: true }),
+      Animated.timing(fadeAnim2, { toValue: 1, duration: 400, delay: 200, useNativeDriver: true }),
+      Animated.timing(fadeAnim3, { toValue: 1, duration: 400, delay: 300, useNativeDriver: true }),
+      Animated.timing(fadeAnim4, { toValue: 1, duration: 400, delay: 400, useNativeDriver: true })
+    ]).start();
+    
     return () => {
       if (durationTimer.current) clearInterval(durationTimer.current);
       if (sound) sound.unloadAsync();
     };
   }, []);
 
-  const screenAnimStyle = useAnimatedStyle(() => ({
+  const screenAnimStyle = {
     flex: 1,
-    transform: [{ translateY: screenY.value }],
-    opacity: screenOpacity.value,
-  }));
+    transform: [{ translateY: screenY }],
+    opacity: screenOpacity,
+  };
 
   // ─── CAMERA ────────────────────────────────────────────────────────────────
   const openCamera = async () => {
@@ -127,40 +132,64 @@ const CreateNoteScreen = ({ navigation }) => {
       return;
     }
     try {
-      const { granted } = await Audio.requestPermissionsAsync();
-      if (!granted) {
-        Alert.alert('Permiso requerido', 'Necesitamos acceso al micrófono.');
+      // 1. Pedir permisos de manera segura
+      const permission = await Audio.requestPermissionsAsync();
+      if (permission.status !== 'granted' && !permission.granted) {
+        Alert.alert('Permiso requerido', 'Necesitamos acceso al micrófono para grabar la nota de voz.');
         return;
       }
+      
+      // 2. Configurar el modo de audio para iOS de forma robusta
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        shouldDuckAndroid: true,
       });
+
+      // 3. Iniciar la grabación
       const { recording: rec } = await Audio.Recording.createAsync(
         Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
+      
       setRecording(rec);
       setIsRecording(true);
       setRecordingDuration(0);
+      
+      // 4. Iniciar el contador
+      if (durationTimer.current) clearInterval(durationTimer.current);
       durationTimer.current = setInterval(() => {
         setRecordingDuration(prev => prev + 1);
       }, 1000);
+
     } catch (e) {
-      Alert.alert('Error', 'No se pudo iniciar la grabación: ' + (e.message || e.toString()));
+      console.error("Error al grabar:", e);
+      Alert.alert('Error de Grabación', 'No se pudo iniciar: ' + (e.message || e.toString()));
     }
   };
 
   const stopRecording = async () => {
     try {
       if (!recording) return;
-      clearInterval(durationTimer.current);
+      if (durationTimer.current) clearInterval(durationTimer.current);
+      
+      // 1. Detener la grabación
       await recording.stopAndUnloadAsync();
+      
+      // 2. Restaurar el modo de audio a playback
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
+      
+      // 3. Guardar el URI
       const uri = recording.getURI();
       setAudioUri(uri);
       setRecording(null);
       setIsRecording(false);
     } catch (e) {
-      Alert.alert('Error', 'No se pudo detener la grabación.');
+      console.error("Error al detener grabación:", e);
+      Alert.alert('Error', 'No se pudo detener la grabación: ' + (e.message || e.toString()));
     }
   };
 
@@ -173,6 +202,13 @@ const CreateNoteScreen = ({ navigation }) => {
         setIsPlaying(false);
         return;
       }
+      
+      // Asegurarnos de que el modo de audio permite reproducción
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
+
       const { sound: s } = await Audio.Sound.createAsync({ uri: audioUri });
       setSound(s);
       setIsPlaying(true);
@@ -184,7 +220,8 @@ const CreateNoteScreen = ({ navigation }) => {
         }
       });
     } catch (e) {
-      Alert.alert('Error', 'No se pudo reproducir el audio.');
+      console.error("Error al reproducir:", e);
+      Alert.alert('Error', 'No se pudo reproducir el audio: ' + (e.message || e.toString()));
     }
   };
 
@@ -256,7 +293,7 @@ const CreateNoteScreen = ({ navigation }) => {
       <StatusBar barStyle="light-content" backgroundColor={theme.background} />
 
       {/* HEADER */}
-      <Animated.View entering={FadeIn.duration(400)} style={styles.header}>
+      <Animated.View style={[styles.header, { opacity: screenOpacity }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
@@ -275,7 +312,7 @@ const CreateNoteScreen = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
         {/* TITLE */}
-        <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.field}>
+        <Animated.View style={[styles.field, { opacity: fadeAnim1 }]}>
           <Text style={styles.label}>◈ TÍTULO</Text>
           <TextInput
             style={styles.titleInput}
@@ -288,7 +325,7 @@ const CreateNoteScreen = ({ navigation }) => {
         </Animated.View>
 
         {/* DESCRIPTION */}
-        <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.field}>
+        <Animated.View style={[styles.field, { opacity: fadeAnim2 }]}>
           <Text style={styles.label}>◈ DESCRIPCIÓN</Text>
           <TextInput
             style={styles.descInput}
@@ -303,7 +340,7 @@ const CreateNoteScreen = ({ navigation }) => {
         </Animated.View>
 
         {/* CAMERA SECTION */}
-        <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.field}>
+        <Animated.View style={[styles.field, { opacity: fadeAnim3 }]}>
           <Text style={styles.label}>◈ FOTOGRAFÍA</Text>
           {imageUri ? (
             <View style={styles.imageContainer}>
@@ -322,7 +359,7 @@ const CreateNoteScreen = ({ navigation }) => {
         </Animated.View>
 
         {/* AUDIO SECTION */}
-        <Animated.View entering={FadeInDown.delay(400).duration(400)} style={styles.field}>
+        <Animated.View style={[styles.field, { opacity: fadeAnim4 }]}>
           <Text style={styles.label}>◈ NOTA DE VOZ</Text>
           <View style={styles.audioPanel}>
             {isRecording ? (
