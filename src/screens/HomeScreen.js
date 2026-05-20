@@ -11,6 +11,7 @@ import {
   Alert,
   Dimensions,
   Animated,
+  Easing,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';

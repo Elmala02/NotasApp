@@ -53,6 +53,12 @@
           "microphonePermission": "Next Notes necesita acceso al micrófono para grabar notas de voz."
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Next Notes necesita acceso a tu galería para seleccionar imágenes para las notas."
+        }
+      ],
       "expo-file-system"
     ]
   }

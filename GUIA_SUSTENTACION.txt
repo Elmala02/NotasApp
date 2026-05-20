@@ -1,0 +1,320 @@
+GUIA DE SUSTENTACION - NOTAS APP
+
+==================================================
+1. IDEA GENERAL DEL PROYECTO
+==================================================
+Nombre de la app: Next Notes
+
+Descripcion corta para decir al inicio:
+"Esta aplicacion fue desarrollada en React Native con Expo y permite crear notas multimedia. El usuario puede escribir titulo y descripcion, tomar una foto con la camara, grabar una nota de voz y guardar todo localmente en el dispositivo."
+
+Objetivo de la herramienta:
+- Organizar notas personales de forma visual.
+- Integrar funcionalidades nativas del celular.
+- Mostrar una interfaz creativa con animaciones y tema visual moderno.
+
+
+==================================================
+2. QUE PIDIO EL PROFESOR Y COMO LO CUMPLO
+==================================================
+Requisito 1: Camara
+- Si cumple.
+- Se usa para tomar una foto y adjuntarla a una nota.
+- Archivo principal: src/screens/CreateNoteScreen.js
+
+Requisito 2: Almacenamiento interno
+- Si cumple.
+- Se guardan las notas en AsyncStorage.
+- Tambien se guardan imagenes y audios en memoria interna del dispositivo.
+- Archivo principal: src/services/storage.js
+
+Funcionalidad nativa adicional 1: Grabacion de audio
+- Si cumple.
+- El usuario puede grabar una nota de voz.
+- Archivo principal: src/screens/CreateNoteScreen.js
+
+Funcionalidad nativa adicional 2: Reproduccion de audio / manejo de archivos
+- Se puede defender como funcionalidad adicional.
+- El usuario puede reproducir la nota de voz guardada.
+- Ademas el proyecto copia y elimina archivos de imagen/audio del almacenamiento interno.
+- Archivos principales:
+  src/screens/DetailScreen.js
+  src/services/storage.js
+
+Animaciones
+- La app tiene animaciones visuales en pantalla de inicio, home, tarjetas, detalle y boton flotante.
+- Archivo principal de ejemplo: App.js, src/screens/HomeScreen.js, src/components/NoteCard.js, src/components/FloatingButton.js
+
+
+==================================================
+3. ESTRUCTURA RAPIDA DEL PROYECTO
+==================================================
+Archivo raiz:
+- App.js
+  Que hace:
+  - Muestra splash screen personalizada.
+  - Configura la navegacion entre pantallas.
+  - Envuelve la app con el proveedor de tema.
+
+- index.js
+  Que hace:
+  - Registra el componente principal de la app.
+
+Pantallas:
+- src/screens/HomeScreen.js
+  Que hace:
+  - Muestra la lista de notas.
+  - Permite buscar.
+  - Permite eliminar.
+  - Abre pantalla de detalle o pantalla de crear nota.
+
+- src/screens/CreateNoteScreen.js
+  Que hace:
+  - Permite crear una nueva nota.
+  - Captura foto con camara.
+  - Graba audio.
+  - Guarda los datos.
+
+- src/screens/DetailScreen.js
+  Que hace:
+  - Muestra el detalle de una nota.
+  - Reproduce audio.
+  - Elimina la nota.
+
+Componentes:
+- src/components/NoteCard.js
+  Que hace:
+  - Renderiza cada tarjeta de nota en el home.
+
+- src/components/FloatingButton.js
+  Que hace:
+  - Muestra el boton flotante para crear una nueva nota.
+
+Servicios:
+- src/services/storage.js
+  Que hace:
+  - Guarda notas.
+  - Obtiene notas.
+  - Elimina notas.
+  - Copia imagenes y audios al almacenamiento interno.
+
+Contexto:
+- src/context/ThemeContext.js
+  Que hace:
+  - Maneja modo oscuro y modo claro.
+
+
+==================================================
+4. COMO EXPLICAR CADA FUNCIONALIDAD
+==================================================
+A. CAMARA
+Que decir:
+"La funcionalidad de camara esta implementada en la pantalla de creacion de nota. Cuando el usuario pulsa tomar foto, la app solicita permisos, abre la camara y guarda la imagen para asociarla a la nota."
+
+Donde mostrar en codigo:
+- src/screens/CreateNoteScreen.js
+
+Funciones importantes:
+- openCamera
+- takePicture
+
+Libreria usada:
+- expo-camera
+
+
+B. ALMACENAMIENTO INTERNO
+Que decir:
+"El almacenamiento interno se implementa en la capa de servicios. Las notas se guardan en AsyncStorage en formato JSON, y cuando hay imagen o audio, esos archivos se copian al directorio interno del dispositivo."
+
+Donde mostrar en codigo:
+- src/services/storage.js
+
+Funciones importantes:
+- saveNote
+- getNotes
+- deleteNote
+- ensureDirectories
+
+Librerias usadas:
+- @react-native-async-storage/async-storage
+- expo-file-system/legacy
+
+
+C. GRABACION DE AUDIO
+Que decir:
+"La aplicacion permite grabar notas de voz. Se solicita permiso al microfono, se inicia la grabacion y luego el archivo queda asociado a la nota."
+
+Donde mostrar en codigo:
+- src/screens/CreateNoteScreen.js
+
+Funciones importantes:
+- startRecording
+- stopRecording
+
+Libreria usada:
+- expo-av
+
+
+D. REPRODUCCION DE AUDIO
+Que decir:
+"Una vez guardada la nota, al abrir el detalle se puede reproducir el audio grabado."
+
+Donde mostrar en codigo:
+- src/screens/DetailScreen.js
+
+Funciones importantes:
+- handlePlayAudio
+- stopAudio
+
+Libreria usada:
+- expo-av
+
+
+E. NAVEGACION ENTRE PANTALLAS
+Que decir:
+"La navegacion se realiza con React Navigation. Desde la pantalla principal se puede ir a crear una nota o al detalle de una nota."
+
+Donde mostrar en codigo:
+- App.js
+- src/screens/HomeScreen.js
+
+Elementos importantes:
+- NavigationContainer
+- createNativeStackNavigator
+
+
+F. TEMA OSCURO Y CLARO
+Que decir:
+"Se implemento un contexto para manejar dos temas visuales y poder cambiar el aspecto de la aplicacion."
+
+Donde mostrar en codigo:
+- src/context/ThemeContext.js
+- src/screens/HomeScreen.js
+
+Elementos importantes:
+- ThemeProvider
+- useTheme
+- toggleTheme
+
+
+==================================================
+5. COMO HACER LA DEMOSTRACION EN VIVO
+==================================================
+Orden recomendado:
+
+1. Abrir la app.
+2. Mostrar el splash screen.
+3. Entrar al home.
+4. Explicar que ahi se listan las notas guardadas.
+5. Pulsar el boton flotante.
+6. Crear una nota nueva:
+   - Escribir titulo.
+   - Escribir descripcion.
+   - Tomar foto.
+   - Grabar audio.
+   - Guardar.
+7. Volver al home y mostrar que la nota aparece en la lista.
+8. Abrir el detalle.
+9. Reproducir el audio.
+10. Mostrar que al eliminar la nota tambien se elimina del almacenamiento.
+
+
+==================================================
+6. QUE ARCHIVO MOSTRAR SEGUN LA PREGUNTA
+==================================================
+Si te preguntan por la navegacion:
+- App.js
+
+Si te preguntan por la camara:
+- src/screens/CreateNoteScreen.js
+
+Si te preguntan por el guardado:
+- src/services/storage.js
+
+Si te preguntan por la grabacion de audio:
+- src/screens/CreateNoteScreen.js
+
+Si te preguntan por la reproduccion de audio:
+- src/screens/DetailScreen.js
+
+Si te preguntan por el tema oscuro/claro:
+- src/context/ThemeContext.js
+
+Si te preguntan por la lista de notas:
+- src/screens/HomeScreen.js
+
+Si te preguntan por los componentes reutilizables:
+- src/components/NoteCard.js
+- src/components/FloatingButton.js
+
+
+==================================================
+7. EXPLICACION RAPIDA DE LAS ANIMACIONES
+==================================================
+Que decir:
+"La interfaz incorpora animaciones de entrada, transiciones visuales y efectos de aparicion para mejorar la experiencia del usuario y reforzar el diseno de la herramienta."
+
+Ejemplos:
+- Splash screen animada en App.js
+- Aparicion del encabezado y elementos en HomeScreen.js
+- Entrada de tarjetas en NoteCard.js
+- Efecto del boton flotante en FloatingButton.js
+
+Si te preguntan por Reanimated:
+"Durante las pruebas en Expo Go del dispositivo surgieron problemas de compatibilidad en tiempo de ejecucion con esa implementacion especifica, por eso se dejo una version estable usando animaciones nativas de React Native para garantizar el funcionamiento correcto de la aplicacion en la sustentacion."
+
+
+==================================================
+8. PREGUNTAS QUE TE PODRIAN HACER
+==================================================
+Pregunta: Donde se guardan las notas?
+Respuesta:
+"Las notas se guardan localmente con AsyncStorage, y los archivos multimedia se copian al almacenamiento interno del dispositivo."
+
+Pregunta: Que pasa si cierro la app?
+Respuesta:
+"La informacion permanece guardada porque se persiste localmente."
+
+Pregunta: Como identificas cada nota?
+Respuesta:
+"Cada nota tiene un id unico generado al momento de crearla."
+
+Pregunta: Que librerias nativas usaste?
+Respuesta:
+"Use expo-camera para camara, expo-av para audio, expo-file-system para manejo de archivos y AsyncStorage para persistencia local."
+
+Pregunta: Como se organiza el codigo?
+Respuesta:
+"La app esta separada en pantallas, componentes, contexto para el tema y una capa de servicios para la persistencia."
+
+
+==================================================
+9. DISCURSO CORTO DE SUSTENTACION
+==================================================
+"Mi proyecto es una aplicacion de notas multimedia desarrollada en React Native con Expo. Permite crear notas con titulo, descripcion, imagen capturada por camara y nota de voz grabada con el microfono. La informacion se guarda localmente usando AsyncStorage y el sistema de archivos del dispositivo. La app esta estructurada por pantallas, componentes reutilizables, contexto de tema y servicios de almacenamiento. Ademas, cuenta con una interfaz visual moderna y varias animaciones para mejorar la experiencia del usuario."
+
+
+==================================================
+10. COMANDOS PARA EJECUTAR EN EXPO GO
+==================================================
+En la terminal:
+
+cd C:\Users\malav\Documents\VISUALPROYECTOS\NotasApp
+npm install
+npx expo start --clear
+
+Si falla la red:
+
+cd C:\Users\malav\Documents\VISUALPROYECTOS\NotasApp
+npx expo start --tunnel
+
+
+==================================================
+11. CONSEJOS FINALES
+==================================================
+- No abras demasiados archivos a la vez durante la sustentacion.
+- Muestra solo los archivos clave.
+- Primero demuestra que funciona y luego explicas el codigo.
+- Si te interrumpen con preguntas, responde corto y luego vuelves a la demo.
+- Enfatiza: camara, almacenamiento interno, audio y estructura del proyecto.
+

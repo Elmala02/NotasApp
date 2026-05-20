@@ -44,6 +44,7 @@ const CreateNoteScreen = ({ navigation }) => {
   // Camera
   const [showCamera, setShowCamera] = useState(false);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [mediaLibraryPermission, requestMediaLibraryPermission] = ImagePicker.useMediaLibraryPermissions();
   const cameraRef = useRef(null);
 
   // Audio
@@ -53,7 +54,6 @@ const CreateNoteScreen = ({ navigation }) => {
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const durationTimer = useRef(null);
-
   const screenY = useRef(new Animated.Value(50)).current;
   const screenOpacity = useRef(new Animated.Value(0)).current;
   const fadeAnim1 = useRef(new Animated.Value(0)).current;
@@ -109,6 +109,30 @@ const CreateNoteScreen = ({ navigation }) => {
       }
     }
     setShowCamera(true);
+  };
+
+  const pickFromGallery = async () => {
+    try {
+      if (Platform.OS !== 'web' && !mediaLibraryPermission?.granted) {
+        const res = await requestMediaLibraryPermission();
+        if (!res.granted) {
+          Alert.alert('Permiso requerido', 'Necesitamos acceso a la galería para seleccionar imágenes.');
+          return;
+        }
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setImageUri(result.assets[0].uri);
+      }
+    } catch (e) {
+      Alert.alert('Error', 'No se pudo abrir la galería.');
+    }
   };
 
   const takePicture = async () => {
@@ -350,11 +374,21 @@ const CreateNoteScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity style={styles.mediaBtn} onPress={openCamera}>
-              <Text style={styles.mediaBtnIcon}>📷</Text>
-              <Text style={styles.mediaBtnText}>TOMAR FOTO</Text>
-              <Text style={styles.mediaBtnSub}>Activar cámara</Text>
-            </TouchableOpacity>
+            <View style={styles.mediaOptionGroup}>
+              <TouchableOpacity style={styles.mediaBtn} onPress={openCamera}>
+                <Text style={styles.mediaBtnIcon}>📷</Text>
+                <Text style={styles.mediaBtnText}>TOMAR FOTO</Text>
+                <Text style={styles.mediaBtnSub}>Activar cámara</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.mediaBtn, styles.galleryBtn]}
+                onPress={pickFromGallery}
+              >
+                <Text style={styles.mediaBtnIcon}>🖼️</Text>
+                <Text style={[styles.mediaBtnText, styles.galleryBtnText]}>ABRIR GALERÍA</Text>
+                <Text style={styles.mediaBtnSub}>Seleccionar imagen del dispositivo</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </Animated.View>
 
@@ -484,6 +518,9 @@ const makeStyles = (theme) => StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 28,
   },
+  mediaOptionGroup: {
+    gap: 12,
+  },
   mediaBtnIcon: { fontSize: 36, marginBottom: 8 },
   mediaBtnText: {
     fontSize: 13,
@@ -491,6 +528,13 @@ const makeStyles = (theme) => StyleSheet.create({
     color: theme.primary,
     letterSpacing: 2,
     marginBottom: 4,
+  },
+  galleryBtn: {
+    borderColor: theme.secondary,
+    backgroundColor: theme.secondary + '12',
+  },
+  galleryBtnText: {
+    color: theme.secondary,
   },
   mediaBtnSub: { fontSize: 12, color: theme.textMuted },
   imageContainer: { borderRadius: 14, overflow: 'hidden' },

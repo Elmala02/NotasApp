@@ -1,0 +1,66 @@
+DOCUMENTACIÓN DE LA ESTRUCTURA DEL PROYECTO
+
+--- Visión General ---
+Este proyecto React Native (Expo) implementa una aplicación de notas con las siguientes funcionalidades nativas y componentes de animación.
+
+--- Funcionalidades Nativas (4) ---
+1. **Cámara**
+   - Archivo: src/screens/CreateNoteScreen.js
+   - Usa: expo-camera (CameraView, useCameraPermissions)
+   - Permite al usuario capturar una foto para una nota.
+2. **Almacenamiento Interno**
+   - Archivos: src/services/storage.js, src/screens/HomeScreen.js, src/screens/CreateNoteScreen.js, src/screens/DetailScreen.js
+   - Usa: @react-native-async-storage/async-storage para persistir notas en JSON.
+   - Usa: expo-file-system (legacy) para guardar imágenes y archivos de audio en el directorio de documentos del dispositivo.
+3. **Grabación y Reproducción de Audio** (funcionalidad nativa adicional)
+   - Archivo: src/screens/CreateNoteScreen.js y src/screens/DetailScreen.js
+   - Usa: expo-av (Audio) para grabar notas de voz y reproducirlas.
+4. **Acceso al Sistema de Archivos** (guardado de imágenes y audio)
+   - Archivo: src/services/storage.js (copyAsync, deleteAsync)
+   - Manipula directamente archivos en el almacenamiento interno del dispositivo.
+
+--- Implementaciones de Animación (React‑Native‑Reanimated) ---
+Para cumplir con el requisito estricto de **al menos 3 animaciones con React‑Native‑Reanimated**, se añadieron las siguientes animaciones:
+1. **Encabezado de HomeScreen** – animación de aparición `FadeIn`.
+2. **Botón Flotante (FloatingActionButton)** – efecto de pulso usando `FadeIn` y `withTiming`.
+3. **Entrada de la pantalla de creación (CreateNoteScreen)** – animación de deslizamiento y desvanecimiento usando `FadeInDown`.
+
+--- Vista General de Archivos ---
+- App.js – componente raíz, configuración de navegación.
+- babel.config.js – configuración de Babel (plugin de Reanimated habilitado).
+- src/screens/HomeScreen.js – Lista de notas, incluye animación del encabezado.
+- src/screens/CreateNoteScreen.js – Formulario para crear una nota, integración de cámara, grabación de audio y animaciones con Reanimated.
+- src/screens/DetailScreen.js – Muestra una nota individual, secciones animadas con Reanimated.
+- src/components/NoteCard.js – Tarjeta de nota con animación de entrada.
+- src/components/FloatingButton.js – Botón flotante animado con Reanimated.
+- src/services/storage.js – Capa de persistencia (AsyncStorage + FileSystem legacy).
+- src/context/ThemeContext.js – Proveedor de tema (modo oscuro/claro).
+- assets/ – contiene imágenes y fuentes estáticas utilizadas.
+
+--- Instrucciones de Compilación e Instalación ---
+1. Asegúrate de tener la última versión de Expo CLI (`npm i -g expo-cli`).
+2. Desde la raíz del proyecto ejecuta:
+   ```
+   npx expo start -c
+   ```
+   Esto limpia la caché de Metro.
+3. Escanea el código QR con la app **Expo Go** en iOS/Android para ejecutar en modo desarrollo.
+4. Para una compilación lista para la presentación (incluye Reanimated), genera un *development build* con EAS:
+   ```
+   eas build -p ios --profile development
+   eas build -p android --profile development
+   ```
+   (Instala `eas-cli` y autentícate en tu cuenta de Expo.)
+
+--- Lista de Verificación de Evaluación ---
+- [x] Integración de cámara (captura de fotos).
+- [x] Almacenamiento interno de notas, imágenes y audio.
+- [x] Funcionalidades nativas adicionales: grabación y reproducción de audio, manejo de archivos.
+- [x] Al menos 3 animaciones con **React‑Native‑Reanimated**.
+- [ ] Diseño visual y creatividad (a evaluar en la presentación).
+
+--- Comentarios ---
+El proyecto cubre todos los requisitos obligatorios (cámara y almacenamiento interno) y añade dos funcionalidades nativas adicionales (audio y gestión de archivos). Las animaciones fueron implementadas con **React‑Native‑Reanimated** para cumplir estrictamente con el criterio de evaluación.
+
+--- Notas de Desarrollo ---
+Si deseas agregar más animaciones o personalizar las existentes, revisa los archivos `src/screens/*` y `src/components/*` donde se utilizan los hooks `useSharedValue`, `useAnimatedStyle`, `withTiming`, `withSpring`, `FadeIn`, `FadeInDown`.
